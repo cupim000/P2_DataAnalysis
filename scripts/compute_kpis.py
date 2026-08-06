@@ -218,7 +218,9 @@ def compute_competitividade(competidores, produtos):
         / por_produto["preco_medio_concorrente"]
     ) * 100
 
-    mais_caros = por_produto.sort_values("diff_pct_medio", ascending=False).head(10)
+    mais_caros = por_produto.sort_values(
+        ["diff_pct_medio", "preco_atual"], ascending=[False, False]
+    ).head(10)
     top_10_mais_caros_que_mercado = [
         {
             "produto": nome,
@@ -229,7 +231,9 @@ def compute_competitividade(competidores, produtos):
         for (_, nome, preco_atual), row in mais_caros.iterrows()
     ]
 
-    mais_baratos = por_produto.sort_values("diff_pct_medio", ascending=True).head(10)
+    mais_baratos = por_produto.sort_values(
+        ["diff_pct_medio", "preco_atual"], ascending=[True, False]
+    ).head(10)
     top_10_mais_baratos_que_mercado = [
         {
             "produto": nome,

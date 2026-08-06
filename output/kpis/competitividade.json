@@ -23,27 +23,15 @@
       "diff_pct": 100.0
     },
     {
-      "produto": "Tênis Nike Revolution",
-      "preco_atual": 105.9,
-      "preco_medio_concorrente": 52.95,
-      "diff_pct": 100.0
-    },
-    {
-      "produto": "Tênis Nike Revolution",
-      "preco_atual": 69.9,
-      "preco_medio_concorrente": 34.95,
-      "diff_pct": 100.0
-    },
-    {
       "produto": "Tênis Puma Speedcat",
       "preco_atual": 451.9,
       "preco_medio_concorrente": 225.95,
       "diff_pct": 100.0
     },
     {
-      "produto": "Tênis Nike Blazer",
-      "preco_atual": 37.9,
-      "preco_medio_concorrente": 18.95,
+      "produto": "Tênis Puma Suede",
+      "preco_atual": 404.5,
+      "preco_medio_concorrente": 202.25,
       "diff_pct": 100.0
     },
     {
@@ -53,15 +41,27 @@
       "diff_pct": 100.0
     },
     {
-      "produto": "Tênis Puma Future",
-      "preco_atual": 67.9,
-      "preco_medio_concorrente": 33.95,
+      "produto": "Tênis Nike Revolution",
+      "preco_atual": 174.9,
+      "preco_medio_concorrente": 87.45,
       "diff_pct": 100.0
     },
     {
       "produto": "Tênis Nike Revolution",
-      "preco_atual": 174.9,
-      "preco_medio_concorrente": 87.45,
+      "preco_atual": 105.9,
+      "preco_medio_concorrente": 52.95,
+      "diff_pct": 100.0
+    },
+    {
+      "produto": "Tênis Nike Dunk",
+      "preco_atual": 95.9,
+      "preco_medio_concorrente": 47.95,
+      "diff_pct": 100.0
+    },
+    {
+      "produto": "Tênis Nike Revolution",
+      "preco_atual": 69.9,
+      "preco_medio_concorrente": 34.95,
       "diff_pct": 100.0
     }
   ],

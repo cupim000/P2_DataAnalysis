@@ -42,31 +42,31 @@ def build_html(k: dict) -> str:
     data_payload = json.dumps(k, ensure_ascii=False)
 
     top_produtos_rows = "\n".join(
-        f'<tr><td>{i + 1}</td><td>{item["produto"]}</td><td>{fmt_brl(item["receita"])}</td></tr>'
+        f'<tr><td>{i + 1}</td><td>{item["produto"]}</td><td class="text-right">{fmt_brl(item["receita"])}</td></tr>'
         for i, item in enumerate(p["top_10_receita"])
     )
 
     top_clientes_rows = "\n".join(
-        f'<tr><td>{i + 1}</td><td>{item["cliente"]}</td><td>{fmt_brl(item["receita"])}</td></tr>'
+        f'<tr><td>{i + 1}</td><td>{item["cliente"]}</td><td class="text-right">{fmt_brl(item["receita"])}</td></tr>'
         for i, item in enumerate(c["top_10_clientes"])
     )
 
     def diff_pill(diff_pct: float) -> str:
         pill_class = "pill-up" if diff_pct >= 0 else "pill-down"
         sign = "+" if diff_pct >= 0 else ""
-        return f'<td class="pill {pill_class}">{sign}{diff_pct:.1f}%</td>'
+        return f'<span class="pill {pill_class}">{sign}{diff_pct:.1f}%</span>'
 
     caros_rows = "\n".join(
-        f'<tr><td>{item["produto"]}</td><td>{fmt_brl(item["preco_atual"])}</td>'
-        f'<td>{fmt_brl(item["preco_medio_concorrente"])}</td>'
-        f'{diff_pill(item["diff_pct"])}</tr>'
+        f'<tr><td>{item["produto"]}</td><td class="text-right">{fmt_brl(item["preco_atual"])}</td>'
+        f'<td class="text-right">{fmt_brl(item["preco_medio_concorrente"])}</td>'
+        f'<td class="text-right">{diff_pill(item["diff_pct"])}</td></tr>'
         for item in comp["top_10_mais_caros_que_mercado"]
     )
 
     baratos_rows = "\n".join(
-        f'<tr><td>{item["produto"]}</td><td>{fmt_brl(item["preco_atual"])}</td>'
-        f'<td>{fmt_brl(item["preco_medio_concorrente"])}</td>'
-        f'{diff_pill(item["diff_pct"])}</tr>'
+        f'<tr><td>{item["produto"]}</td><td class="text-right">{fmt_brl(item["preco_atual"])}</td>'
+        f'<td class="text-right">{fmt_brl(item["preco_medio_concorrente"])}</td>'
+        f'<td class="text-right">{diff_pill(item["diff_pct"])}</td></tr>'
         for item in comp["top_10_mais_baratos_que_mercado"]
     )
 
@@ -215,6 +215,7 @@ def build_html(k: dict) -> str:
   table {{ width: 100%; border-collapse: collapse; font-size: 0.9rem; }}
   th, td {{ text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border); }}
   th {{ color: var(--text-dim); font-weight: 500; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.06em; }}
+  .text-right {{ text-align: right; }}
   td:last-child, th:last-child {{ text-align: right; }}
 
   .pill {{ display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-weight: 600; font-size: 0.82rem; }}
@@ -336,7 +337,7 @@ def build_html(k: dict) -> str:
       <div class="panel">
         <h3>Top 10 mais caros que o mercado</h3>
         <table>
-          <thead><tr><th>Produto</th><th>Nosso preço</th><th>Média mercado</th><th>Diferença</th></tr></thead>
+          <thead><tr><th>Produto</th><th class="text-right">Nosso preço</th><th class="text-right">Média mercado</th><th class="text-right">Diferença</th></tr></thead>
           <tbody>{caros_rows}</tbody>
         </table>
       </div>
@@ -344,7 +345,7 @@ def build_html(k: dict) -> str:
     <div class="panel" style="margin-top:1.2rem;">
       <h3>Top 10 mais baratos que o mercado</h3>
       <table>
-        <thead><tr><th>Produto</th><th>Nosso preço</th><th>Média mercado</th><th>Diferença</th></tr></thead>
+        <thead><tr><th>Produto</th><th class="text-right">Nosso preço</th><th class="text-right">Média mercado</th><th class="text-right">Diferença</th></tr></thead>
         <tbody>{baratos_rows}</tbody>
       </table>
     </div>
