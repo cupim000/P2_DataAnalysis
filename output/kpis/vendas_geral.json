@@ -1,0 +1,30 @@
+{
+  "receita_total": 971883.1,
+  "numero_pedidos": 3020,
+  "quantidade_total_itens": 4322,
+  "ticket_medio": 321.82,
+  "receita_por_mes": [
+    {
+      "mes": "2025-12",
+      "receita": 620615.2
+    },
+    {
+      "mes": "2026-01",
+      "receita": 351267.9
+    }
+  ],
+  "receita_por_canal": [
+    {
+      "canal": "ecommerce",
+      "receita": 705486.21,
+      "pedidos": 2155,
+      "ticket_medio": 327.37
+    },
+    {
+      "canal": "loja_fisica",
+      "receita": 266396.89,
+      "pedidos": 865,
+      "ticket_medio": 307.97
+    }
+  ]
+}

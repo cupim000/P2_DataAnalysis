@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise de E-commerce — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #05070f;
+    --bg-alt: #0b0f1e;
+    --panel: rgba(20, 26, 46, 0.65);
+    --border: rgba(120, 150, 255, 0.14);
+    --cyan: #24f2d8;
+    --purple: #a06bff;
+    --pink: #ff5fb8;
+    --text: #eef1fb;
+    --text-dim: #8b93b8;
+    --up: #ff6b81;
+    --down: #24f2d8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: radial-gradient(circle at 15% 0%, #16204a 0%, var(--bg) 45%),
+                radial-gradient(circle at 85% 20%, #2a0f42 0%, transparent 40%),
+                var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, .value { font-family: 'Space Grotesk', sans-serif; }
+  .glow {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(600px circle at 10% 10%, rgba(36,242,216,0.08), transparent 40%),
+      radial-gradient(600px circle at 90% 30%, rgba(160,107,255,0.10), transparent 40%);
+    z-index: 0;
+  }
+  header.hero {
+    position: relative;
+    z-index: 1;
+    padding: 6rem 6vw 4rem;
+    text-align: center;
+  }
+  .eyebrow {
+    display: inline-block;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    color: var(--cyan);
+    border: 1px solid var(--border);
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+    background: rgba(36,242,216,0.06);
+  }
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    background: linear-gradient(120deg, #f4f6ff 20%, var(--cyan) 55%, var(--purple) 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 1rem;
+  }
+  .hero p.sub {
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 0 auto;
+    font-size: 1.05rem;
+  }
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.2rem;
+    max-width: 1100px;
+    margin: 3rem auto 0;
+  }
+  .kpi-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1.6rem;
+    backdrop-filter: blur(14px);
+    text-align: left;
+    transition: transform .25s ease, border-color .25s ease;
+  }
+  .kpi-card:hover { transform: translateY(-4px); border-color: rgba(36,242,216,0.4); }
+  .kpi-card .label { color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .kpi-card .value { font-size: 1.9rem; font-weight: 700; margin-top: 0.4rem; color: var(--cyan); }
+
+  main { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 2rem 6vw 6rem; }
+  section { margin-top: 5rem; }
+  section .section-head { margin-bottom: 1.8rem; }
+  section .section-head .tag { color: var(--purple); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.2em; }
+  section h2 { font-size: 1.9rem; margin-top: 0.3rem; }
+
+  .grid-2 { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+  @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.6rem;
+    backdrop-filter: blur(14px);
+    display: flex;
+    flex-direction: column;
+  }
+  .panel h3 { font-size: 1rem; color: var(--text-dim); font-weight: 500; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .chart-box { position: relative; flex: 1; min-height: 280px; width: 100%; }
+
+  .mini-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .mini-label { color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase; }
+  .mini-value { font-size: 1.4rem; font-weight: 700; color: var(--purple); font-family: 'Space Grotesk', sans-serif; }
+  .mini-sub { color: var(--text-dim); font-size: 0.8rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-dim); font-weight: 500; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.06em; }
+  td:last-child, th:last-child { text-align: right; }
+
+  .pill { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px; font-weight: 600; font-size: 0.82rem; }
+  .pill-up { background: rgba(255,107,129,0.14); color: var(--up); }
+  .pill-down { background: rgba(36,242,216,0.14); color: var(--down); }
+
+  footer {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 3rem 1rem 4rem;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<header class="hero">
+  <span class="eyebrow">Relatório de performance</span>
+  <h1>Análise Completa de E-commerce</h1>
+  <p class="sub">Visão consolidada de vendas, produtos, clientes e competitividade de preço, calculada a partir dos dados brutos de operação.</p>
+  <div class="kpi-strip">
+    <div class="kpi-card"><div class="label">Receita total</div><div class="value">R$ 971.883,10</div></div>
+    <div class="kpi-card"><div class="label">Pedidos</div><div class="value">3.020</div></div>
+    <div class="kpi-card"><div class="label">Ticket médio</div><div class="value">R$ 321,82</div></div>
+    <div class="kpi-card"><div class="label">Itens vendidos</div><div class="value">4.322</div></div>
+  </div>
+</header>
+
+<main>
+
+  <section id="vendas">
+    <div class="section-head">
+      <span class="tag">01 · Vendas gerais</span>
+      <h2>Evolução da receita</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <h3>Receita por mês</h3>
+        <div class="chart-box"><canvas id="chartReceitaMes"></canvas></div>
+      </div>
+      <div class="panel" style="display:flex; flex-direction:column; gap:1rem; justify-content:center;">
+        <h3>Receita por canal</h3>
+        <div class="mini-card">
+              <span class="mini-label">Ecommerce</span>
+              <span class="mini-value">R$ 705.486,21</span>
+              <span class="mini-sub">2.155 pedidos · ticket médio R$ 327,37</span>
+            </div>
+<div class="mini-card">
+              <span class="mini-label">Loja Fisica</span>
+              <span class="mini-value">R$ 266.396,89</span>
+              <span class="mini-sub">865 pedidos · ticket médio R$ 307,97</span>
+            </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="produtos">
+    <div class="section-head">
+      <span class="tag">02 · Produtos</span>
+      <h2>O que mais vende</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <h3>Top 10 produtos por receita</h3>
+        <table>
+          <thead><tr><th>#</th><th>Produto</th><th>Receita</th></tr></thead>
+          <tbody><tr><td>1</td><td>Camisa Social</td><td>R$ 115.794,92</td></tr>
+<tr><td>2</td><td>Fone de Ouvido Esportivo</td><td>R$ 114.268,47</td></tr>
+<tr><td>3</td><td>Necessaire</td><td>R$ 63.668,43</td></tr>
+<tr><td>4</td><td>Persiana Vertical</td><td>R$ 42.310,56</td></tr>
+<tr><td>5</td><td>Calça Jeans Skinny</td><td>R$ 41.313,34</td></tr>
+<tr><td>6</td><td>Condicionador Hidratante</td><td>R$ 31.587,75</td></tr>
+<tr><td>7</td><td>Shorts Jeans</td><td>R$ 28.431,49</td></tr>
+<tr><td>8</td><td>Garrafa Térmica 1L</td><td>R$ 21.498,06</td></tr>
+<tr><td>9</td><td>Notebook Inspiron 15</td><td>R$ 20.813,53</td></tr>
+<tr><td>10</td><td>Vestido Floral</td><td>R$ 17.842,00</td></tr></tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h3>Receita por categoria</h3>
+        <div class="chart-box"><canvas id="chartCategoria"></canvas></div>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-top:1.2rem;">
+      <div class="panel">
+        <h3>Receita por marca (top 10)</h3>
+        <div class="chart-box"><canvas id="chartMarca"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Preço médio por categoria</h3>
+        <div class="chart-box"><canvas id="chartPrecoCategoria"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="clientes">
+    <div class="section-head">
+      <span class="tag">03 · Clientes</span>
+      <h2>Quem compra</h2>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <h3>Receita por estado</h3>
+        <div class="chart-box"><canvas id="chartEstado"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Novos cadastros por mês</h3>
+        <div class="chart-box"><canvas id="chartCadastros"></canvas></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:1.2rem;">
+      <h3>Top 10 clientes por receita &nbsp;·&nbsp; ticket médio por cliente: R$ 19.437,66</h3>
+      <table>
+        <thead><tr><th>#</th><th>Cliente</th><th>Receita</th></tr></thead>
+        <tbody><tr><td>1</td><td>Ana Sophia Pereira</td><td>R$ 30.716,63</td></tr>
+<tr><td>2</td><td>Melissa Pastor</td><td>R$ 30.211,93</td></tr>
+<tr><td>3</td><td>Dr, Benício Gomes</td><td>R$ 27.424,23</td></tr>
+<tr><td>4</td><td>Henrique da Conceição</td><td>R$ 26.687,99</td></tr>
+<tr><td>5</td><td>Murilo da Mata</td><td>R$ 26.091,64</td></tr>
+<tr><td>6</td><td>Dra, Mariane Pacheco</td><td>R$ 25.454,83</td></tr>
+<tr><td>7</td><td>Josué Souza</td><td>R$ 24.750,17</td></tr>
+<tr><td>8</td><td>Srta, Yasmin Siqueira</td><td>R$ 23.674,10</td></tr>
+<tr><td>9</td><td>Bella Borges</td><td>R$ 22.865,99</td></tr>
+<tr><td>10</td><td>Vitor Gabriel da Luz</td><td>R$ 22.734,53</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="competitividade">
+    <div class="section-head">
+      <span class="tag">04 · Competitividade de preço</span>
+      <h2>Nosso preço vs. o mercado</h2>
+    </div>
+    <div class="grid-3">
+      <div class="mini-card"><span class="mini-label">Produtos analisados</span><span class="mini-value">215</span></div>
+      <div class="mini-card"><span class="mini-label">Acima do mercado</span><span class="mini-value" style="color:var(--up)">127</span></div>
+      <div class="mini-card"><span class="mini-label">Abaixo do mercado</span><span class="mini-value" style="color:var(--down)">82</span></div>
+    </div>
+    <div class="grid-2" style="margin-top:1.2rem;">
+      <div class="panel">
+        <h3>Diferença média de preço por concorrente</h3>
+        <div class="chart-box"><canvas id="chartConcorrentes"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Top 10 mais caros que o mercado</h3>
+        <table>
+          <thead><tr><th>Produto</th><th>Nosso preço</th><th>Média mercado</th><th>Diferença</th></tr></thead>
+          <tbody><tr><td>Tênis Nike Air Max</td><td>R$ 68,99</td><td>R$ 34,49</td><td class="pill pill-up">+100.0%</td></tr>
+<tr><td>Tênis Puma Future</td><td>R$ 123,99</td><td>R$ 61,99</td><td class="pill pill-up">+100.0%</td></tr>
+<tr><td>Tênis Nike Court</td><td>R$ 31,90</td><td>R$ 15,95</td><td class="pill pill-up">+100.0%</td></tr>
+<tr><td>Tênis Nike Revolution</td><td>R$ 105,90</td><td>R$ 52,95</td><td class="pill pill-up">+100.0%</td></tr>
+<tr><td>Tênis Nike Revolution</td><td>R$ 69,90</td><td>R$ 34,95</td><td class="pill pill-up">+100.0%</td></tr>
+<tr><td>Tênis Puma Speedcat</td><td>R$ 451,90</td><td>R$ 225,95</td><td class="pill pill-up">+100.0%</td></tr>
+<tr><td>Tênis Nike Blazer</td><td>R$ 37,90</td><td>R$ 18,95</td><td class="pill pill-up">+100.0%</td></tr>
+<tr><td>Tênis Adidas Stan Smith</td><td>R$ 197,90</td><td>R$ 98,95</td><td class="pill pill-up">+100.0%</td></tr>
+<tr><td>Tênis Puma Future</td><td>R$ 67,90</td><td>R$ 33,95</td><td class="pill pill-up">+100.0%</td></tr>
+<tr><td>Tênis Nike Revolution</td><td>R$ 174,90</td><td>R$ 87,45</td><td class="pill pill-up">+100.0%</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:1.2rem;">
+      <h3>Top 10 mais baratos que o mercado</h3>
+      <table>
+        <thead><tr><th>Produto</th><th>Nosso preço</th><th>Média mercado</th><th>Diferença</th></tr></thead>
+        <tbody><tr><td>Controle Xbox</td><td>R$ 310,90</td><td>R$ 333,70</td><td class="pill pill-down">-6.8%</td></tr>
+<tr><td>Soundbar TV</td><td>R$ 88,99</td><td>R$ 94,33</td><td class="pill pill-down">-5.7%</td></tr>
+<tr><td>Relógio Analógico</td><td>R$ 105,50</td><td>R$ 111,83</td><td class="pill pill-down">-5.7%</td></tr>
+<tr><td>Porta-retrato</td><td>R$ 142,90</td><td>R$ 151,47</td><td class="pill pill-down">-5.7%</td></tr>
+<tr><td>Mochila Esportiva</td><td>R$ 44,90</td><td>R$ 47,59</td><td class="pill pill-down">-5.7%</td></tr>
+<tr><td>Saia Midi</td><td>R$ 72,90</td><td>R$ 77,27</td><td class="pill pill-down">-5.7%</td></tr>
+<tr><td>Mouse Gamer RGB</td><td>R$ 49,99</td><td>R$ 52,49</td><td class="pill pill-down">-4.8%</td></tr>
+<tr><td>Conjunto de Malha</td><td>R$ 86,50</td><td>R$ 90,82</td><td class="pill pill-down">-4.8%</td></tr>
+<tr><td>Amplificador de Áudio</td><td>R$ 73,90</td><td>R$ 77,59</td><td class="pill pill-down">-4.8%</td></tr>
+<tr><td>Halteres Ajustáveis</td><td>R$ 52,99</td><td>R$ 55,51</td><td class="pill pill-down">-4.5%</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>Gerado automaticamente a partir de data/*.csv via scripts/compute_kpis.py + scripts/build_presentation.py</footer>
+
+<script>
+const KPI = {"vendas": {"receita_total": 971883.1, "numero_pedidos": 3020, "quantidade_total_itens": 4322, "ticket_medio": 321.82, "receita_por_mes": [{"mes": "2025-12", "receita": 620615.2}, {"mes": "2026-01", "receita": 351267.9}], "receita_por_canal": [{"canal": "ecommerce", "receita": 705486.21, "pedidos": 2155, "ticket_medio": 327.37}, {"canal": "loja_fisica", "receita": 266396.89, "pedidos": 865, "ticket_medio": 307.97}]}, "produtos": {"top_10_receita": [{"produto": "Camisa Social", "receita": 115794.92}, {"produto": "Fone de Ouvido Esportivo", "receita": 114268.47}, {"produto": "Necessaire", "receita": 63668.43}, {"produto": "Persiana Vertical", "receita": 42310.56}, {"produto": "Calça Jeans Skinny", "receita": 41313.34}, {"produto": "Condicionador Hidratante", "receita": 31587.75}, {"produto": "Shorts Jeans", "receita": 28431.49}, {"produto": "Garrafa Térmica 1L", "receita": 21498.06}, {"produto": "Notebook Inspiron 15", "receita": 20813.53}, {"produto": "Vestido Floral", "receita": 17842.0}], "top_10_quantidade": [{"produto": "Placa Mãe B450", "quantidade": 134}, {"produto": "Cortina Blackout", "quantidade": 130}, {"produto": "Frigideira Antiaderente", "quantidade": 124}, {"produto": "Sabonete Facial", "quantidade": 112}, {"produto": "Blusa de Frio", "quantidade": 110}, {"produto": "Persiana Vertical", "quantidade": 108}, {"produto": "Cinto de Couro", "quantidade": 107}, {"produto": "Óculos de Sol", "quantidade": 104}, {"produto": "Camisa Social", "quantidade": 103}, {"produto": "Webcam para Stream", "quantidade": 102}], "receita_por_categoria": [{"categoria": "Moda", "receita": 248124.15}, {"categoria": "Áudio", "receita": 134867.29}, {"categoria": "Acessórios", "receita": 120909.94}, {"categoria": "Casa", "receita": 112704.52}, {"categoria": "Cozinha", "receita": 85059.89}, {"categoria": "Beleza", "receita": 66852.52}, {"categoria": "Eletrônicos", "receita": 62826.28}, {"categoria": "Informática", "receita": 61410.87}, {"categoria": "Games", "receita": 50176.04}, {"categoria": "Esporte", "receita": 24711.59}], "receita_por_marca": [{"marca": "Brastemp", "receita": 161012.51}, {"marca": "Consul", "receita": 128622.39}, {"marca": "Xiaomi", "receita": 100598.85}, {"marca": "Asus", "receita": 94236.36}, {"marca": "Sony", "receita": 60184.38}, {"marca": "Motorola", "receita": 58604.13}, {"marca": "Apple", "receita": 45403.32}, {"marca": "Samsung", "receita": 44897.5}, {"marca": "Electrolux", "receita": 44490.31}, {"marca": "LG", "receita": 33985.33}], "preco_medio_por_categoria": [{"categoria": "Acessórios", "preco_medio": 310.65}, {"categoria": "Beleza", "preco_medio": 304.34}, {"categoria": "Cozinha", "preco_medio": 299.66}, {"categoria": "Informática", "preco_medio": 254.11}, {"categoria": "Áudio", "preco_medio": 214.72}, {"categoria": "Moda", "preco_medio": 197.75}, {"categoria": "Eletrônicos", "preco_medio": 192.65}, {"categoria": "Esporte", "preco_medio": 175.34}, {"categoria": "Casa", "preco_medio": 143.13}, {"categoria": "Games", "preco_medio": 132.16}, {"categoria": "Tênis", "preco_medio": 131.96}]}, "clientes": {"receita_por_estado": [{"estado": "AM", "receita": 79474.67}, {"estado": "TO", "receita": 71055.63}, {"estado": "PA", "receita": 70003.51}, {"estado": "AC", "receita": 69833.78}, {"estado": "SP", "receita": 60898.63}, {"estado": "RS", "receita": 60727.1}, {"estado": "GO", "receita": 57898.59}, {"estado": "MT", "receita": 57431.13}, {"estado": "MG", "receita": 51955.58}, {"estado": "CE", "receita": 49133.23}, {"estado": "SE", "receita": 44631.43}, {"estado": "AL", "receita": 44340.2}, {"estado": "MA", "receita": 38173.2}, {"estado": "MS", "receita": 37081.14}, {"estado": "ES", "receita": 34087.97}, {"estado": "DF", "receita": 26687.99}, {"estado": "RR", "receita": 26091.64}, {"estado": "RJ", "receita": 24750.17}, {"estado": "PB", "receita": 20861.16}, {"estado": "PE", "receita": 19024.24}, {"estado": "AP", "receita": 14425.28}, {"estado": "PR", "receita": 13316.83}], "clientes_por_estado": [{"estado": "AM", "clientes": 4}, {"estado": "PA", "clientes": 4}, {"estado": "TO", "clientes": 4}, {"estado": "MT", "clientes": 3}, {"estado": "CE", "clientes": 3}, {"estado": "AC", "clientes": 3}, {"estado": "SE", "clientes": 3}, {"estado": "RS", "clientes": 3}, {"estado": "SP", "clientes": 3}, {"estado": "GO", "clientes": 3}, {"estado": "MA", "clientes": 2}, {"estado": "MS", "clientes": 2}, {"estado": "AL", "clientes": 2}, {"estado": "ES", "clientes": 2}, {"estado": "MG", "clientes": 2}, {"estado": "AP", "clientes": 1}, {"estado": "DF", "clientes": 1}, {"estado": "PB", "clientes": 1}, {"estado": "RR", "clientes": 1}, {"estado": "RJ", "clientes": 1}, {"estado": "PR", "clientes": 1}, {"estado": "PE", "clientes": 1}], "novos_cadastros_por_mes": [{"mes": "2022-10", "novos_clientes": 1}, {"mes": "2022-12", "novos_clientes": 2}, {"mes": "2023-01", "novos_clientes": 3}, {"mes": "2023-02", "novos_clientes": 3}, {"mes": "2023-03", "novos_clientes": 1}, {"mes": "2023-04", "novos_clientes": 4}, {"mes": "2023-05", "novos_clientes": 1}, {"mes": "2023-06", "novos_clientes": 2}, {"mes": "2023-07", "novos_clientes": 1}, {"mes": "2023-08", "novos_clientes": 1}, {"mes": "2023-10", "novos_clientes": 2}, {"mes": "2023-11", "novos_clientes": 3}, {"mes": "2024-01", "novos_clientes": 1}, {"mes": "2024-02", "novos_clientes": 1}, {"mes": "2024-04", "novos_clientes": 2}, {"mes": "2024-07", "novos_clientes": 1}, {"mes": "2024-08", "novos_clientes": 2}, {"mes": "2024-09", "novos_clientes": 1}, {"mes": "2024-12", "novos_clientes": 3}, {"mes": "2025-01", "novos_clientes": 4}, {"mes": "2025-02", "novos_clientes": 2}, {"mes": "2025-03", "novos_clientes": 2}, {"mes": "2025-05", "novos_clientes": 2}, {"mes": "2025-06", "novos_clientes": 2}, {"mes": "2025-07", "novos_clientes": 2}, {"mes": "2025-10", "novos_clientes": 1}], "ticket_medio_por_cliente": 19437.66, "top_10_clientes": [{"cliente": "Ana Sophia Pereira", "receita": 30716.63}, {"cliente": "Melissa Pastor", "receita": 30211.93}, {"cliente": "Dr, Benício Gomes", "receita": 27424.23}, {"cliente": "Henrique da Conceição", "receita": 26687.99}, {"cliente": "Murilo da Mata", "receita": 26091.64}, {"cliente": "Dra, Mariane Pacheco", "receita": 25454.83}, {"cliente": "Josué Souza", "receita": 24750.17}, {"cliente": "Srta, Yasmin Siqueira", "receita": 23674.1}, {"cliente": "Bella Borges", "receita": 22865.99}, {"cliente": "Vitor Gabriel da Luz", "receita": 22734.53}]}, "competitividade": {"produtos_analisados": 215, "produtos_mais_caros_que_mercado": 127, "produtos_mais_baratos_que_mercado": 82, "produtos_no_preco_de_mercado": 6, "top_10_mais_caros_que_mercado": [{"produto": "Tênis Nike Air Max", "preco_atual": 68.99, "preco_medio_concorrente": 34.49, "diff_pct": 100.03}, {"produto": "Tênis Puma Future", "preco_atual": 123.99, "preco_medio_concorrente": 61.99, "diff_pct": 100.02}, {"produto": "Tênis Nike Court", "preco_atual": 31.9, "preco_medio_concorrente": 15.95, "diff_pct": 100.0}, {"produto": "Tênis Nike Revolution", "preco_atual": 105.9, "preco_medio_concorrente": 52.95, "diff_pct": 100.0}, {"produto": "Tênis Nike Revolution", "preco_atual": 69.9, "preco_medio_concorrente": 34.95, "diff_pct": 100.0}, {"produto": "Tênis Puma Speedcat", "preco_atual": 451.9, "preco_medio_concorrente": 225.95, "diff_pct": 100.0}, {"produto": "Tênis Nike Blazer", "preco_atual": 37.9, "preco_medio_concorrente": 18.95, "diff_pct": 100.0}, {"produto": "Tênis Adidas Stan Smith", "preco_atual": 197.9, "preco_medio_concorrente": 98.95, "diff_pct": 100.0}, {"produto": "Tênis Puma Future", "preco_atual": 67.9, "preco_medio_concorrente": 33.95, "diff_pct": 100.0}, {"produto": "Tênis Nike Revolution", "preco_atual": 174.9, "preco_medio_concorrente": 87.45, "diff_pct": 100.0}], "top_10_mais_baratos_que_mercado": [{"produto": "Controle Xbox", "preco_atual": 310.9, "preco_medio_concorrente": 333.7, "diff_pct": -6.83}, {"produto": "Soundbar TV", "preco_atual": 88.99, "preco_medio_concorrente": 94.33, "diff_pct": -5.66}, {"produto": "Relógio Analógico", "preco_atual": 105.5, "preco_medio_concorrente": 111.83, "diff_pct": -5.66}, {"produto": "Porta-retrato", "preco_atual": 142.9, "preco_medio_concorrente": 151.47, "diff_pct": -5.66}, {"produto": "Mochila Esportiva", "preco_atual": 44.9, "preco_medio_concorrente": 47.59, "diff_pct": -5.66}, {"produto": "Saia Midi", "preco_atual": 72.9, "preco_medio_concorrente": 77.27, "diff_pct": -5.66}, {"produto": "Mouse Gamer RGB", "preco_atual": 49.99, "preco_medio_concorrente": 52.49, "diff_pct": -4.76}, {"produto": "Conjunto de Malha", "preco_atual": 86.5, "preco_medio_concorrente": 90.82, "diff_pct": -4.76}, {"produto": "Amplificador de Áudio", "preco_atual": 73.9, "preco_medio_concorrente": 77.59, "diff_pct": -4.76}, {"produto": "Halteres Ajustáveis", "preco_atual": 52.99, "preco_medio_concorrente": 55.51, "diff_pct": -4.54}], "breakdown_por_concorrente": [{"concorrente": "Magalu", "diff_pct_medio": 8.71}, {"concorrente": "Shopee", "diff_pct_medio": 8.5}, {"concorrente": "Amazon", "diff_pct_medio": 8.31}, {"concorrente": "Mercado Livre", "diff_pct_medio": 6.68}]}};
+
+Chart.defaults.color = "#8b93b8";
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.borderColor = "rgba(120,150,255,0.12)";
+
+const gridStyle = { color: "rgba(120,150,255,0.08)" };
+const neon = ["#24f2d8", "#a06bff", "#ff5fb8", "#ffd166", "#6ea8ff"];
+
+function gradient(ctx, area, c1, c2) {
+  const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+  g.addColorStop(0, c1);
+  g.addColorStop(1, c2);
+  return g;
+}
+
+new Chart(document.getElementById('chartReceitaMes'), {
+  type: 'line',
+  data: {
+    labels: KPI.vendas.receita_por_mes.map(d => d.mes),
+    datasets: [{
+      label: 'Receita',
+      data: KPI.vendas.receita_por_mes.map(d => d.receita),
+      borderColor: '#24f2d8',
+      backgroundColor: 'rgba(36,242,216,0.15)',
+      fill: true, tension: 0.35, pointRadius: 4, pointBackgroundColor: '#24f2d8'
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle }, y: { grid: gridStyle } } }
+});
+
+new Chart(document.getElementById('chartCategoria'), {
+  type: 'bar',
+  data: {
+    labels: KPI.produtos.receita_por_categoria.map(d => d.categoria),
+    datasets: [{ label: 'Receita', data: KPI.produtos.receita_por_categoria.map(d => d.receita), backgroundColor: '#a06bff', borderRadius: 6 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle }, y: { grid: gridStyle } } }
+});
+
+new Chart(document.getElementById('chartMarca'), {
+  type: 'bar',
+  data: {
+    labels: KPI.produtos.receita_por_marca.map(d => d.marca),
+    datasets: [{ label: 'Receita', data: KPI.produtos.receita_por_marca.map(d => d.receita), backgroundColor: '#ff5fb8', borderRadius: 6 }]
+  },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle }, y: { grid: gridStyle } } }
+});
+
+new Chart(document.getElementById('chartPrecoCategoria'), {
+  type: 'bar',
+  data: {
+    labels: KPI.produtos.preco_medio_por_categoria.map(d => d.categoria),
+    datasets: [{ label: 'Preço médio', data: KPI.produtos.preco_medio_por_categoria.map(d => d.preco_medio), backgroundColor: '#ffd166', borderRadius: 6 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle }, y: { grid: gridStyle } } }
+});
+
+new Chart(document.getElementById('chartEstado'), {
+  type: 'bar',
+  data: {
+    labels: KPI.clientes.receita_por_estado.map(d => d.estado),
+    datasets: [{ label: 'Receita', data: KPI.clientes.receita_por_estado.map(d => d.receita), backgroundColor: '#24f2d8', borderRadius: 6 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle }, y: { grid: gridStyle } } }
+});
+
+new Chart(document.getElementById('chartCadastros'), {
+  type: 'line',
+  data: {
+    labels: KPI.clientes.novos_cadastros_por_mes.map(d => d.mes),
+    datasets: [{
+      label: 'Novos clientes', data: KPI.clientes.novos_cadastros_por_mes.map(d => d.novos_clientes),
+      borderColor: '#a06bff', backgroundColor: 'rgba(160,107,255,0.15)', fill: true, tension: 0.35, pointRadius: 3
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle }, y: { grid: gridStyle } } }
+});
+
+new Chart(document.getElementById('chartConcorrentes'), {
+  type: 'bar',
+  data: {
+    labels: KPI.competitividade.breakdown_por_concorrente.map(d => d.concorrente),
+    datasets: [{
+      label: 'Diferença média (%)',
+      data: KPI.competitividade.breakdown_por_concorrente.map(d => d.diff_pct_medio),
+      backgroundColor: KPI.competitividade.breakdown_por_concorrente.map(d => d.diff_pct_medio >= 0 ? '#ff6b81' : '#24f2d8'),
+      borderRadius: 6
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: gridStyle }, y: { grid: gridStyle } } }
+});
+</script>
+</body>
+</html>

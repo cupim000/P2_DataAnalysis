@@ -1,0 +1,331 @@
+{
+  "receita_por_estado": [
+    {
+      "estado": "AM",
+      "receita": 79474.67
+    },
+    {
+      "estado": "TO",
+      "receita": 71055.63
+    },
+    {
+      "estado": "PA",
+      "receita": 70003.51
+    },
+    {
+      "estado": "AC",
+      "receita": 69833.78
+    },
+    {
+      "estado": "SP",
+      "receita": 60898.63
+    },
+    {
+      "estado": "RS",
+      "receita": 60727.1
+    },
+    {
+      "estado": "GO",
+      "receita": 57898.59
+    },
+    {
+      "estado": "MT",
+      "receita": 57431.13
+    },
+    {
+      "estado": "MG",
+      "receita": 51955.58
+    },
+    {
+      "estado": "CE",
+      "receita": 49133.23
+    },
+    {
+      "estado": "SE",
+      "receita": 44631.43
+    },
+    {
+      "estado": "AL",
+      "receita": 44340.2
+    },
+    {
+      "estado": "MA",
+      "receita": 38173.2
+    },
+    {
+      "estado": "MS",
+      "receita": 37081.14
+    },
+    {
+      "estado": "ES",
+      "receita": 34087.97
+    },
+    {
+      "estado": "DF",
+      "receita": 26687.99
+    },
+    {
+      "estado": "RR",
+      "receita": 26091.64
+    },
+    {
+      "estado": "RJ",
+      "receita": 24750.17
+    },
+    {
+      "estado": "PB",
+      "receita": 20861.16
+    },
+    {
+      "estado": "PE",
+      "receita": 19024.24
+    },
+    {
+      "estado": "AP",
+      "receita": 14425.28
+    },
+    {
+      "estado": "PR",
+      "receita": 13316.83
+    }
+  ],
+  "clientes_por_estado": [
+    {
+      "estado": "AM",
+      "clientes": 4
+    },
+    {
+      "estado": "PA",
+      "clientes": 4
+    },
+    {
+      "estado": "TO",
+      "clientes": 4
+    },
+    {
+      "estado": "MT",
+      "clientes": 3
+    },
+    {
+      "estado": "CE",
+      "clientes": 3
+    },
+    {
+      "estado": "AC",
+      "clientes": 3
+    },
+    {
+      "estado": "SE",
+      "clientes": 3
+    },
+    {
+      "estado": "RS",
+      "clientes": 3
+    },
+    {
+      "estado": "SP",
+      "clientes": 3
+    },
+    {
+      "estado": "GO",
+      "clientes": 3
+    },
+    {
+      "estado": "MA",
+      "clientes": 2
+    },
+    {
+      "estado": "MS",
+      "clientes": 2
+    },
+    {
+      "estado": "AL",
+      "clientes": 2
+    },
+    {
+      "estado": "ES",
+      "clientes": 2
+    },
+    {
+      "estado": "MG",
+      "clientes": 2
+    },
+    {
+      "estado": "AP",
+      "clientes": 1
+    },
+    {
+      "estado": "DF",
+      "clientes": 1
+    },
+    {
+      "estado": "PB",
+      "clientes": 1
+    },
+    {
+      "estado": "RR",
+      "clientes": 1
+    },
+    {
+      "estado": "RJ",
+      "clientes": 1
+    },
+    {
+      "estado": "PR",
+      "clientes": 1
+    },
+    {
+      "estado": "PE",
+      "clientes": 1
+    }
+  ],
+  "novos_cadastros_por_mes": [
+    {
+      "mes": "2022-10",
+      "novos_clientes": 1
+    },
+    {
+      "mes": "2022-12",
+      "novos_clientes": 2
+    },
+    {
+      "mes": "2023-01",
+      "novos_clientes": 3
+    },
+    {
+      "mes": "2023-02",
+      "novos_clientes": 3
+    },
+    {
+      "mes": "2023-03",
+      "novos_clientes": 1
+    },
+    {
+      "mes": "2023-04",
+      "novos_clientes": 4
+    },
+    {
+      "mes": "2023-05",
+      "novos_clientes": 1
+    },
+    {
+      "mes": "2023-06",
+      "novos_clientes": 2
+    },
+    {
+      "mes": "2023-07",
+      "novos_clientes": 1
+    },
+    {
+      "mes": "2023-08",
+      "novos_clientes": 1
+    },
+    {
+      "mes": "2023-10",
+      "novos_clientes": 2
+    },
+    {
+      "mes": "2023-11",
+      "novos_clientes": 3
+    },
+    {
+      "mes": "2024-01",
+      "novos_clientes": 1
+    },
+    {
+      "mes": "2024-02",
+      "novos_clientes": 1
+    },
+    {
+      "mes": "2024-04",
+      "novos_clientes": 2
+    },
+    {
+      "mes": "2024-07",
+      "novos_clientes": 1
+    },
+    {
+      "mes": "2024-08",
+      "novos_clientes": 2
+    },
+    {
+      "mes": "2024-09",
+      "novos_clientes": 1
+    },
+    {
+      "mes": "2024-12",
+      "novos_clientes": 3
+    },
+    {
+      "mes": "2025-01",
+      "novos_clientes": 4
+    },
+    {
+      "mes": "2025-02",
+      "novos_clientes": 2
+    },
+    {
+      "mes": "2025-03",
+      "novos_clientes": 2
+    },
+    {
+      "mes": "2025-05",
+      "novos_clientes": 2
+    },
+    {
+      "mes": "2025-06",
+      "novos_clientes": 2
+    },
+    {
+      "mes": "2025-07",
+      "novos_clientes": 2
+    },
+    {
+      "mes": "2025-10",
+      "novos_clientes": 1
+    }
+  ],
+  "ticket_medio_por_cliente": 19437.66,
+  "top_10_clientes": [
+    {
+      "cliente": "Ana Sophia Pereira",
+      "receita": 30716.63
+    },
+    {
+      "cliente": "Melissa Pastor",
+      "receita": 30211.93
+    },
+    {
+      "cliente": "Dr, Benício Gomes",
+      "receita": 27424.23
+    },
+    {
+      "cliente": "Henrique da Conceição",
+      "receita": 26687.99
+    },
+    {
+      "cliente": "Murilo da Mata",
+      "receita": 26091.64
+    },
+    {
+      "cliente": "Dra, Mariane Pacheco",
+      "receita": 25454.83
+    },
+    {
+      "cliente": "Josué Souza",
+      "receita": 24750.17
+    },
+    {
+      "cliente": "Srta, Yasmin Siqueira",
+      "receita": 23674.1
+    },
+    {
+      "cliente": "Bella Borges",
+      "receita": 22865.99
+    },
+    {
+      "cliente": "Vitor Gabriel da Luz",
+      "receita": 22734.53
+    }
+  ]
+}

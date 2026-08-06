@@ -1,0 +1,148 @@
+{
+  "produtos_analisados": 215,
+  "produtos_mais_caros_que_mercado": 127,
+  "produtos_mais_baratos_que_mercado": 82,
+  "produtos_no_preco_de_mercado": 6,
+  "top_10_mais_caros_que_mercado": [
+    {
+      "produto": "Tênis Nike Air Max",
+      "preco_atual": 68.99,
+      "preco_medio_concorrente": 34.49,
+      "diff_pct": 100.03
+    },
+    {
+      "produto": "Tênis Puma Future",
+      "preco_atual": 123.99,
+      "preco_medio_concorrente": 61.99,
+      "diff_pct": 100.02
+    },
+    {
+      "produto": "Tênis Nike Court",
+      "preco_atual": 31.9,
+      "preco_medio_concorrente": 15.95,
+      "diff_pct": 100.0
+    },
+    {
+      "produto": "Tênis Nike Revolution",
+      "preco_atual": 105.9,
+      "preco_medio_concorrente": 52.95,
+      "diff_pct": 100.0
+    },
+    {
+      "produto": "Tênis Nike Revolution",
+      "preco_atual": 69.9,
+      "preco_medio_concorrente": 34.95,
+      "diff_pct": 100.0
+    },
+    {
+      "produto": "Tênis Puma Speedcat",
+      "preco_atual": 451.9,
+      "preco_medio_concorrente": 225.95,
+      "diff_pct": 100.0
+    },
+    {
+      "produto": "Tênis Nike Blazer",
+      "preco_atual": 37.9,
+      "preco_medio_concorrente": 18.95,
+      "diff_pct": 100.0
+    },
+    {
+      "produto": "Tênis Adidas Stan Smith",
+      "preco_atual": 197.9,
+      "preco_medio_concorrente": 98.95,
+      "diff_pct": 100.0
+    },
+    {
+      "produto": "Tênis Puma Future",
+      "preco_atual": 67.9,
+      "preco_medio_concorrente": 33.95,
+      "diff_pct": 100.0
+    },
+    {
+      "produto": "Tênis Nike Revolution",
+      "preco_atual": 174.9,
+      "preco_medio_concorrente": 87.45,
+      "diff_pct": 100.0
+    }
+  ],
+  "top_10_mais_baratos_que_mercado": [
+    {
+      "produto": "Controle Xbox",
+      "preco_atual": 310.9,
+      "preco_medio_concorrente": 333.7,
+      "diff_pct": -6.83
+    },
+    {
+      "produto": "Soundbar TV",
+      "preco_atual": 88.99,
+      "preco_medio_concorrente": 94.33,
+      "diff_pct": -5.66
+    },
+    {
+      "produto": "Relógio Analógico",
+      "preco_atual": 105.5,
+      "preco_medio_concorrente": 111.83,
+      "diff_pct": -5.66
+    },
+    {
+      "produto": "Porta-retrato",
+      "preco_atual": 142.9,
+      "preco_medio_concorrente": 151.47,
+      "diff_pct": -5.66
+    },
+    {
+      "produto": "Mochila Esportiva",
+      "preco_atual": 44.9,
+      "preco_medio_concorrente": 47.59,
+      "diff_pct": -5.66
+    },
+    {
+      "produto": "Saia Midi",
+      "preco_atual": 72.9,
+      "preco_medio_concorrente": 77.27,
+      "diff_pct": -5.66
+    },
+    {
+      "produto": "Mouse Gamer RGB",
+      "preco_atual": 49.99,
+      "preco_medio_concorrente": 52.49,
+      "diff_pct": -4.76
+    },
+    {
+      "produto": "Conjunto de Malha",
+      "preco_atual": 86.5,
+      "preco_medio_concorrente": 90.82,
+      "diff_pct": -4.76
+    },
+    {
+      "produto": "Amplificador de Áudio",
+      "preco_atual": 73.9,
+      "preco_medio_concorrente": 77.59,
+      "diff_pct": -4.76
+    },
+    {
+      "produto": "Halteres Ajustáveis",
+      "preco_atual": 52.99,
+      "preco_medio_concorrente": 55.51,
+      "diff_pct": -4.54
+    }
+  ],
+  "breakdown_por_concorrente": [
+    {
+      "concorrente": "Magalu",
+      "diff_pct_medio": 8.71
+    },
+    {
+      "concorrente": "Shopee",
+      "diff_pct_medio": 8.5
+    },
+    {
+      "concorrente": "Amazon",
+      "diff_pct_medio": 8.31
+    },
+    {
+      "concorrente": "Mercado Livre",
+      "diff_pct_medio": 6.68
+    }
+  ]
+}
