@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard E-commerce &mdash; An&aacute;lise v2 (Supabase)</title>
+<meta name="description" content="Painel executivo de KPIs de e-commerce computados via SQL no Supabase Postgres.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --color-primary: #0F172A;
+    --color-secondary: #1E293B;
+    --color-accent: #22C55E;
+    --color-background: #020617;
+    --color-foreground: #F8FAFC;
+    --color-muted: #1A1E2F;
+    --color-border: #334155;
+    --color-destructive: #EF4444;
+    --color-info: #38BDF8;
+    --color-violet: #A78BFA;
+    --color-amber: #FBBF24;
+    --space-xs: 0.25rem; --space-sm: 0.5rem; --space-md: 1rem;
+    --space-lg: 1.5rem; --space-xl: 2rem; --space-2xl: 3rem; --space-3xl: 4rem;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.45);
+    --radius: 12px;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: 'Fira Sans', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .num, .mini-value, .kpi-value {
+    font-family: 'Fira Code', 'Fira Sans', monospace;
+  }
+
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  .skip-link {
+    position: absolute; left: -9999px; top: 0; z-index: 100;
+    background: var(--color-accent); color: #001a09;
+    padding: var(--space-sm) var(--space-md); border-radius: 0 0 8px 0;
+    font-weight: 600;
+  }
+  .skip-link:focus { left: 0; }
+
+  header.topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-xl);
+    background: rgba(2, 6, 23, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: wrap;
+  }
+
+  .brand { display: flex; align-items: center; gap: var(--space-sm); }
+  .brand svg { flex-shrink: 0; }
+  .brand-title { font-weight: 600; font-size: 1.05rem; letter-spacing: 0.01em; }
+  .brand-sub { font-size: 0.75rem; color: #94A3B8; }
+
+  .source-badge {
+    display: inline-flex; align-items: center; gap: var(--space-xs);
+    background: var(--color-muted); border: 1px solid var(--color-border);
+    color: #A7F3D0; padding: 6px 12px; border-radius: 999px;
+    font-size: 0.78rem; font-weight: 500;
+  }
+  .source-badge .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--color-accent);
+    box-shadow: 0 0 8px var(--color-accent);
+  }
+
+  nav.tabs {
+    display: flex; gap: var(--space-xs); padding: 0 var(--space-xl);
+    overflow-x: auto; border-bottom: 1px solid var(--color-border);
+    background: var(--color-background);
+    position: sticky; top: 61px; z-index: 19;
+  }
+  nav.tabs a {
+    color: #94A3B8; text-decoration: none; font-size: 0.85rem; font-weight: 500;
+    padding: var(--space-md) var(--space-sm); white-space: nowrap;
+    border-bottom: 2px solid transparent; cursor: pointer;
+    transition: color 200ms ease, border-color 200ms ease;
+  }
+  nav.tabs a:hover, nav.tabs a:focus-visible { color: var(--color-foreground); }
+  nav.tabs a.active { color: var(--color-foreground); border-bottom-color: var(--color-accent); }
+
+  main { max-width: 1280px; margin: 0 auto; padding: var(--space-xl); }
+
+  section { margin-bottom: var(--space-3xl); scroll-margin-top: 130px; }
+
+  .section-head { margin-bottom: var(--space-lg); }
+  .section-head h2 { margin: 0 0 4px; font-size: 1.3rem; font-weight: 600; }
+  .section-head p { margin: 0; color: #94A3B8; font-size: 0.9rem; }
+
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-md);
+  }
+
+  .card {
+    background: var(--color-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-md);
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: #475569; }
+
+  .kpi-card { display: flex; flex-direction: column; gap: 6px; }
+  .kpi-icon {
+    width: 36px; height: 36px; border-radius: 9px; display: flex;
+    align-items: center; justify-content: center; margin-bottom: var(--space-sm);
+    background: var(--color-muted); color: var(--color-accent);
+  }
+  .kpi-label { color: #94A3B8; font-size: 0.82rem; font-weight: 500; }
+  .kpi-value { font-size: 1.65rem; font-weight: 600; letter-spacing: -0.01em; }
+  .kpi-sub { font-size: 0.78rem; color: #64748B; }
+
+  .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-md); align-items: stretch; }
+  .grid-equal { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
+  @media (max-width: 900px) { .grid-2, .grid-equal { grid-template-columns: 1fr; } }
+
+  .chart-card h3, .table-card h3 {
+    margin: 0 0 var(--space-md); font-size: 0.95rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .chart-card .chart-wrap { position: relative; }
+
+  .mini-card-row { display: flex; flex-direction: column; gap: var(--space-md); height: 100%; }
+  .mini-card {
+    background: var(--color-secondary); border: 1px solid var(--color-border);
+    border-radius: var(--radius); padding: var(--space-md); display: flex;
+    flex-direction: column; gap: 4px; flex: 1;
+  }
+  .mini-label { font-size: 0.78rem; color: #94A3B8; font-weight: 500; }
+  .mini-value { font-size: 1.25rem; font-weight: 600; }
+  .mini-sub { font-size: 0.75rem; color: #64748B; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  thead th {
+    text-align: left; color: #94A3B8; font-weight: 500; font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 8px 10px; border-bottom: 1px solid var(--color-border);
+    position: sticky; top: 0; background: var(--color-primary);
+  }
+  tbody td { padding: 9px 10px; border-bottom: 1px solid rgba(51, 65, 85, 0.5); }
+  tbody tr:hover { background: rgba(148, 163, 184, 0.06); }
+  tbody tr:last-child td { border-bottom: none; }
+  .text-right { text-align: right; }
+  .num { font-family: 'Fira Code', monospace; font-variant-numeric: tabular-nums; }
+  .table-scroll { max-height: 420px; overflow-y: auto; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+    font-family: 'Fira Code', monospace;
+  }
+  .pill-up { background: rgba(239, 68, 68, 0.14); color: #FCA5A5; }
+  .pill-down { background: rgba(34, 197, 94, 0.14); color: #86EFAC; }
+
+  .legend-note { font-size: 0.75rem; color: #64748B; margin-top: var(--space-sm); }
+
+  footer {
+    border-top: 1px solid var(--color-border); padding: var(--space-xl);
+    text-align: center; color: #64748B; font-size: 0.82rem;
+  }
+  footer code { color: #94A3B8; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 999px; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Pular para o conte&uacute;do</a>
+
+<header class="topbar">
+  <div class="brand">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect width="24" height="24" rx="6" fill="#22C55E" opacity="0.15"/>
+      <path d="M4 17V9M9 17V5M14 17V11M19 17V7" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="brand-title">An&aacute;lise E-commerce &middot; v2</div>
+      <div class="brand-sub">Painel executivo de KPIs</div>
+    </div>
+  </div>
+  <span class="source-badge"><span class="dot" aria-hidden="true"></span> Fonte: Supabase Postgres &middot; KPIs via SQL</span>
+</header>
+
+<nav class="tabs" aria-label="Se&ccedil;&otilde;es do painel">
+  <a href="#visao-geral">Vis&atilde;o Geral</a>
+  <a href="#produtos">Produtos</a>
+  <a href="#clientes">Clientes</a>
+  <a href="#competitividade">Competitividade</a>
+</nav>
+
+<main id="conteudo">
+
+  <section id="visao-geral">
+    <div class="section-head">
+      <h2>Vis&atilde;o Geral</h2>
+      <p>Indicadores consolidados de vendas no per&iacute;odo analisado.</p>
+    </div>
+
+    <div class="kpi-grid" style="margin-bottom: var(--space-md);">
+      <div class="card kpi-card">
+        <div class="kpi-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <span class="kpi-label">Receita Total</span>
+        <span class="kpi-value">R$ 967.643,09</span>
+        <span class="kpi-sub">no per&iacute;odo dispon&iacute;vel</span>
+      </div>
+      <div class="card kpi-card">
+        <div class="kpi-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 3h2l2.4 12.4a2 2 0 002 1.6h7.2a2 2 0 002-1.6L20 8H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1.4" fill="currentColor"/><circle cx="17" cy="20" r="1.4" fill="currentColor"/></svg>
+        </div>
+        <span class="kpi-label">Pedidos</span>
+        <span class="kpi-value">3.000</span>
+        <span class="kpi-sub">4.297 itens vendidos</span>
+      </div>
+      <div class="card kpi-card">
+        <div class="kpi-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19V5a1 1 0 011-1h8l7 7-7 7H5a1 1 0 01-1-1z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="14.5" cy="9.5" r="1.4" fill="currentColor"/></svg>
+        </div>
+        <span class="kpi-label">Ticket M&eacute;dio</span>
+        <span class="kpi-value">R$ 322,55</span>
+        <span class="kpi-sub">receita / pedido</span>
+      </div>
+      <div class="card kpi-card">
+        <div class="kpi-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m5-8.13a4 4 0 110 8 4 4 0 010-8zm7 4a3 3 0 100-6 3 3 0 000 6zm-14 0a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <span class="kpi-label">Ticket M&eacute;dio / Cliente</span>
+        <span class="kpi-value">R$ 19.352,86</span>
+        <span class="kpi-sub">receita acumulada por cliente</span>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card chart-card">
+        <h3>Receita por m&ecirc;s</h3>
+        <div class="chart-wrap" style="height:280px;">
+          <canvas id="chartReceitaMes" role="img" aria-label="Gr&aacute;fico de linha da receita mensal ao longo do per&iacute;odo analisado"></canvas>
+        </div>
+      </div>
+      <div class="mini-card-row">
+        <div style="margin-bottom: -4px;"><span class="kpi-label">Receita por Canal</span></div>
+        <div class="mini-card">
+              <span class="mini-label">Ecommerce</span>
+              <span class="mini-value">R$ 703.445,79</span>
+              <span class="mini-sub">2.145 pedidos &middot; ticket m&eacute;dio R$ 327,95</span>
+            </div>
+<div class="mini-card">
+              <span class="mini-label">Loja Fisica</span>
+              <span class="mini-value">R$ 264.197,30</span>
+              <span class="mini-sub">855 pedidos &middot; ticket m&eacute;dio R$ 309,00</span>
+            </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="produtos">
+    <div class="section-head">
+      <h2>Produtos</h2>
+      <p>Ranking de receita, volume e composi&ccedil;&atilde;o do portf&oacute;lio.</p>
+    </div>
+
+    <div class="grid-equal" style="margin-bottom: var(--space-md);">
+      <div class="card chart-card">
+        <h3>Receita por categoria</h3>
+        <div class="chart-wrap" style="height:320px;">
+          <canvas id="chartCategoria" role="img" aria-label="Gr&aacute;fico de barras horizontais da receita total por categoria de produto"></canvas>
+        </div>
+      </div>
+      <div class="card chart-card">
+        <h3>Receita por marca (top 10)</h3>
+        <div class="chart-wrap" style="height:320px;">
+          <canvas id="chartMarca" role="img" aria-label="Gr&aacute;fico de barras horizontais das 10 marcas com maior receita"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-equal">
+      <div class="card table-card">
+        <h3>Top 10 produtos por receita</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Produto</th><th class="text-right">Receita</th></tr></thead>
+            <tbody><tr><td>1</td><td>Fone de Ouvido Esportivo</td><td class="text-right num">R$ 118.263,36</td></tr>
+<tr><td>2</td><td>Camisa Social</td><td class="text-right num">R$ 115.794,92</td></tr>
+<tr><td>3</td><td>Necessaire</td><td class="text-right num">R$ 63.668,43</td></tr>
+<tr><td>4</td><td>Persiana Vertical</td><td class="text-right num">R$ 46.897,53</td></tr>
+<tr><td>5</td><td>Calça Jeans Skinny</td><td class="text-right num">R$ 41.313,34</td></tr>
+<tr><td>6</td><td>Condicionador Hidratante</td><td class="text-right num">R$ 31.587,75</td></tr>
+<tr><td>7</td><td>Shorts Jeans</td><td class="text-right num">R$ 28.431,49</td></tr>
+<tr><td>8</td><td>Garrafa Térmica 1L</td><td class="text-right num">R$ 24.221,94</td></tr>
+<tr><td>9</td><td>Vestido Floral</td><td class="text-right num">R$ 24.132,62</td></tr>
+<tr><td>10</td><td>Notebook Inspiron 15</td><td class="text-right num">R$ 22.107,07</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card table-card">
+        <h3>Top 10 produtos por quantidade</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Produto</th><th class="text-right">Unidades</th></tr></thead>
+            <tbody><tr><td>1</td><td>Persiana Vertical</td><td class="text-right num">192 un.</td></tr>
+<tr><td>2</td><td>Placa Mãe B450</td><td class="text-right num">158 un.</td></tr>
+<tr><td>3</td><td>Microfone para Stream</td><td class="text-right num">132 un.</td></tr>
+<tr><td>4</td><td>Cinto de Couro</td><td class="text-right num">131 un.</td></tr>
+<tr><td>5</td><td>Cortina Blackout</td><td class="text-right num">130 un.</td></tr>
+<tr><td>6</td><td>Vestido Floral</td><td class="text-right num">125 un.</td></tr>
+<tr><td>7</td><td>Frigideira Antiaderente</td><td class="text-right num">124 un.</td></tr>
+<tr><td>8</td><td>Jogo de Toalhas</td><td class="text-right num">121 un.</td></tr>
+<tr><td>9</td><td>Sabonete Facial</td><td class="text-right num">115 un.</td></tr>
+<tr><td>10</td><td>Tapete Persa</td><td class="text-right num">113 un.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="clientes">
+    <div class="section-head">
+      <h2>Clientes</h2>
+      <p>Distribui&ccedil;&atilde;o geogr&aacute;fica, aquisi&ccedil;&atilde;o e maiores contas.</p>
+    </div>
+
+    <div class="grid-2" style="margin-bottom: var(--space-md);">
+      <div class="card chart-card">
+        <h3>Receita por estado</h3>
+        <div class="chart-wrap" style="height:460px;">
+          <canvas id="chartEstado" role="img" aria-label="Gr&aacute;fico de barras horizontais da receita total por estado do cliente"></canvas>
+        </div>
+      </div>
+      <div class="card table-card">
+        <h3>Clientes cadastrados por estado</h3>
+        <div class="table-scroll" style="max-height:460px;">
+          <table>
+            <thead><tr><th>Estado</th><th class="text-right">Clientes</th></tr></thead>
+            <tbody><tr><td>PA</td><td class="text-right num">4</td></tr>
+<tr><td>TO</td><td class="text-right num">4</td></tr>
+<tr><td>AM</td><td class="text-right num">4</td></tr>
+<tr><td>SE</td><td class="text-right num">3</td></tr>
+<tr><td>SP</td><td class="text-right num">3</td></tr>
+<tr><td>RS</td><td class="text-right num">3</td></tr>
+<tr><td>GO</td><td class="text-right num">3</td></tr>
+<tr><td>MT</td><td class="text-right num">3</td></tr>
+<tr><td>CE</td><td class="text-right num">3</td></tr>
+<tr><td>AC</td><td class="text-right num">3</td></tr>
+<tr><td>ES</td><td class="text-right num">2</td></tr>
+<tr><td>AL</td><td class="text-right num">2</td></tr>
+<tr><td>MS</td><td class="text-right num">2</td></tr>
+<tr><td>MG</td><td class="text-right num">2</td></tr>
+<tr><td>MA</td><td class="text-right num">2</td></tr>
+<tr><td>DF</td><td class="text-right num">1</td></tr>
+<tr><td>PB</td><td class="text-right num">1</td></tr>
+<tr><td>PE</td><td class="text-right num">1</td></tr>
+<tr><td>AP</td><td class="text-right num">1</td></tr>
+<tr><td>RR</td><td class="text-right num">1</td></tr>
+<tr><td>PR</td><td class="text-right num">1</td></tr>
+<tr><td>RJ</td><td class="text-right num">1</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card chart-card">
+        <h3>Novos cadastros por m&ecirc;s</h3>
+        <div class="chart-wrap" style="height:280px;">
+          <canvas id="chartNovosClientes" role="img" aria-label="Gr&aacute;fico de linha de novos clientes cadastrados por m&ecirc;s"></canvas>
+        </div>
+      </div>
+      <div class="card table-card">
+        <h3>Top 10 clientes por receita</h3>
+        <div class="table-scroll" style="max-height:280px;">
+          <table>
+            <thead><tr><th>#</th><th>Cliente</th><th class="text-right">Receita</th></tr></thead>
+            <tbody><tr><td>1</td><td>Ana Sophia Pereira</td><td class="text-right num">R$ 30.716,63</td></tr>
+<tr><td>2</td><td>Melissa Pastor</td><td class="text-right num">R$ 30.039,03</td></tr>
+<tr><td>3</td><td>Dr, Benício Gomes</td><td class="text-right num">R$ 27.397,24</td></tr>
+<tr><td>4</td><td>Henrique da Conceição</td><td class="text-right num">R$ 26.687,99</td></tr>
+<tr><td>5</td><td>Murilo da Mata</td><td class="text-right num">R$ 26.091,64</td></tr>
+<tr><td>6</td><td>Dra, Mariane Pacheco</td><td class="text-right num">R$ 25.454,83</td></tr>
+<tr><td>7</td><td>Josué Souza</td><td class="text-right num">R$ 24.350,59</td></tr>
+<tr><td>8</td><td>Srta, Yasmin Siqueira</td><td class="text-right num">R$ 23.674,10</td></tr>
+<tr><td>9</td><td>Vitor Gabriel da Luz</td><td class="text-right num">R$ 22.656,63</td></tr>
+<tr><td>10</td><td>Bella Borges</td><td class="text-right num">R$ 22.643,99</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="competitividade">
+    <div class="section-head">
+      <h2>Competitividade de Pre&ccedil;o</h2>
+      <p>Compara&ccedil;&atilde;o do pre&ccedil;o atual contra a m&eacute;dia coletada dos concorrentes.</p>
+    </div>
+
+    <div class="kpi-grid" style="margin-bottom: var(--space-md);">
+      <div class="card kpi-card">
+        <span class="kpi-label">Produtos Analisados</span>
+        <span class="kpi-value">215</span>
+        <span class="kpi-sub">com cota&ccedil;&atilde;o de concorrente</span>
+      </div>
+      <div class="card kpi-card">
+        <span class="kpi-label">Mais Caros que o Mercado</span>
+        <span class="kpi-value" style="color:#FCA5A5;">127</span>
+        <span class="kpi-sub">produtos acima da m&eacute;dia dos concorrentes</span>
+      </div>
+      <div class="card kpi-card">
+        <span class="kpi-label">Mais Baratos que o Mercado</span>
+        <span class="kpi-value" style="color:#86EFAC;">82</span>
+        <span class="kpi-sub">produtos abaixo da m&eacute;dia dos concorrentes</span>
+      </div>
+      <div class="card kpi-card">
+        <span class="kpi-label">No Pre&ccedil;o de Mercado</span>
+        <span class="kpi-value">6</span>
+        <span class="kpi-sub">diferen&ccedil;a igual a zero</span>
+      </div>
+    </div>
+
+    <div class="card chart-card" style="margin-bottom: var(--space-md);">
+      <h3>Diferen&ccedil;a m&eacute;dia de pre&ccedil;o por concorrente</h3>
+      <p class="legend-note" style="margin-top:-6px; margin-bottom: var(--space-sm);">Positivo (vermelho) = nosso pre&ccedil;o acima do concorrente &middot; Negativo (verde) = nosso pre&ccedil;o abaixo</p>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="chartConcorrente" role="img" aria-label="Gr&aacute;fico de barras horizontais da diferen&ccedil;a m&eacute;dia percentual de pre&ccedil;o por concorrente"></canvas>
+      </div>
+    </div>
+
+    <div class="grid-equal">
+      <div class="card table-card">
+        <h3>Top 10 mais caros que o mercado</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Produto</th><th class="text-right">Nosso Pre&ccedil;o</th><th class="text-right">M&eacute;dia Concorrentes</th><th class="text-right">Diferen&ccedil;a</th></tr></thead>
+            <tbody><tr><td>Tênis Nike Air Max</td><td class="text-right num">R$ 68,99</td><td class="text-right num">R$ 34,49</td><td class="text-right"><span class="pill pill-up"><span aria-hidden="true">&#9650;</span> +100.0%</span></td></tr>
+<tr><td>Tênis Puma Future</td><td class="text-right num">R$ 123,99</td><td class="text-right num">R$ 61,99</td><td class="text-right"><span class="pill pill-up"><span aria-hidden="true">&#9650;</span> +100.0%</span></td></tr>
+<tr><td>Tênis Puma Speedcat</td><td class="text-right num">R$ 451,90</td><td class="text-right num">R$ 225,95</td><td class="text-right"><span class="pill pill-up"><span aria-hidden="true">&#9650;</span> +100.0%</span></td></tr>
+<tr><td>Tênis Puma Suede</td><td class="text-right num">R$ 404,50</td><td class="text-right num">R$ 202,25</td><td class="text-right"><span class="pill pill-up"><span aria-hidden="true">&#9650;</span> +100.0%</span></td></tr>
+<tr><td>Tênis Adidas Stan Smith</td><td class="text-right num">R$ 197,90</td><td class="text-right num">R$ 98,95</td><td class="text-right"><span class="pill pill-up"><span aria-hidden="true">&#9650;</span> +100.0%</span></td></tr>
+<tr><td>Tênis Nike Revolution</td><td class="text-right num">R$ 174,90</td><td class="text-right num">R$ 87,45</td><td class="text-right"><span class="pill pill-up"><span aria-hidden="true">&#9650;</span> +100.0%</span></td></tr>
+<tr><td>Tênis Nike Revolution</td><td class="text-right num">R$ 105,90</td><td class="text-right num">R$ 52,95</td><td class="text-right"><span class="pill pill-up"><span aria-hidden="true">&#9650;</span> +100.0%</span></td></tr>
+<tr><td>Tênis Nike Dunk</td><td class="text-right num">R$ 95,90</td><td class="text-right num">R$ 47,95</td><td class="text-right"><span class="pill pill-up"><span aria-hidden="true">&#9650;</span> +100.0%</span></td></tr>
+<tr><td>Tênis Nike Revolution</td><td class="text-right num">R$ 69,90</td><td class="text-right num">R$ 34,95</td><td class="text-right"><span class="pill pill-up"><span aria-hidden="true">&#9650;</span> +100.0%</span></td></tr>
+<tr><td>Tênis Puma Future</td><td class="text-right num">R$ 67,90</td><td class="text-right num">R$ 33,95</td><td class="text-right"><span class="pill pill-up"><span aria-hidden="true">&#9650;</span> +100.0%</span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card table-card">
+        <h3>Top 10 mais baratos que o mercado</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Produto</th><th class="text-right">Nosso Pre&ccedil;o</th><th class="text-right">M&eacute;dia Concorrentes</th><th class="text-right">Diferen&ccedil;a</th></tr></thead>
+            <tbody><tr><td>Controle Xbox</td><td class="text-right num">R$ 310,90</td><td class="text-right num">R$ 333,70</td><td class="text-right"><span class="pill pill-down"><span aria-hidden="true">&#9660;</span> -6.8%</span></td></tr>
+<tr><td>Soundbar TV</td><td class="text-right num">R$ 88,99</td><td class="text-right num">R$ 94,33</td><td class="text-right"><span class="pill pill-down"><span aria-hidden="true">&#9660;</span> -5.7%</span></td></tr>
+<tr><td>Relógio Analógico</td><td class="text-right num">R$ 105,50</td><td class="text-right num">R$ 111,83</td><td class="text-right"><span class="pill pill-down"><span aria-hidden="true">&#9660;</span> -5.7%</span></td></tr>
+<tr><td>Porta-retrato</td><td class="text-right num">R$ 142,90</td><td class="text-right num">R$ 151,47</td><td class="text-right"><span class="pill pill-down"><span aria-hidden="true">&#9660;</span> -5.7%</span></td></tr>
+<tr><td>Mochila Esportiva</td><td class="text-right num">R$ 44,90</td><td class="text-right num">R$ 47,59</td><td class="text-right"><span class="pill pill-down"><span aria-hidden="true">&#9660;</span> -5.7%</span></td></tr>
+<tr><td>Saia Midi</td><td class="text-right num">R$ 72,90</td><td class="text-right num">R$ 77,27</td><td class="text-right"><span class="pill pill-down"><span aria-hidden="true">&#9660;</span> -5.7%</span></td></tr>
+<tr><td>Mouse Gamer RGB</td><td class="text-right num">R$ 49,99</td><td class="text-right num">R$ 52,49</td><td class="text-right"><span class="pill pill-down"><span aria-hidden="true">&#9660;</span> -4.8%</span></td></tr>
+<tr><td>Conjunto de Malha</td><td class="text-right num">R$ 86,50</td><td class="text-right num">R$ 90,82</td><td class="text-right"><span class="pill pill-down"><span aria-hidden="true">&#9660;</span> -4.8%</span></td></tr>
+<tr><td>Amplificador de Áudio</td><td class="text-right num">R$ 73,90</td><td class="text-right num">R$ 77,59</td><td class="text-right"><span class="pill pill-down"><span aria-hidden="true">&#9660;</span> -4.8%</span></td></tr>
+<tr><td>Halteres Ajustáveis</td><td class="text-right num">R$ 52,99</td><td class="text-right num">R$ 55,51</td><td class="text-right"><span class="pill pill-down"><span aria-hidden="true">&#9660;</span> -4.5%</span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Gerado a partir dos KPIs agregados via SQL no Supabase (<code>v2_supabase/scripts/compute_kpis.py</code>) &middot;
+  Dashboard renderizado localmente por <code>build_presentation.py</code>, sem chamadas ao banco nesta etapa.
+</footer>
+
+<script>
+const DATA = {"vendas": {"receita_total": 967643.09, "numero_pedidos": 3000, "quantidade_total_itens": 4297, "ticket_medio": 322.55, "receita_por_mes": [{"mes": "2025-12", "receita": 618350.76}, {"mes": "2026-01", "receita": 349292.33}], "receita_por_canal": [{"canal": "ecommerce", "receita": 703445.79, "pedidos": 2145, "ticket_medio": 327.95}, {"canal": "loja_fisica", "receita": 264197.3, "pedidos": 855, "ticket_medio": 309.0}]}, "produtos": {"top_10_receita": [{"produto": "Fone de Ouvido Esportivo", "receita": 118263.36}, {"produto": "Camisa Social", "receita": 115794.92}, {"produto": "Necessaire", "receita": 63668.43}, {"produto": "Persiana Vertical", "receita": 46897.53}, {"produto": "Calça Jeans Skinny", "receita": 41313.34}, {"produto": "Condicionador Hidratante", "receita": 31587.75}, {"produto": "Shorts Jeans", "receita": 28431.49}, {"produto": "Garrafa Térmica 1L", "receita": 24221.94}, {"produto": "Vestido Floral", "receita": 24132.62}, {"produto": "Notebook Inspiron 15", "receita": 22107.07}], "top_10_quantidade": [{"produto": "Persiana Vertical", "quantidade": 192}, {"produto": "Placa Mãe B450", "quantidade": 158}, {"produto": "Microfone para Stream", "quantidade": 132}, {"produto": "Cinto de Couro", "quantidade": 131}, {"produto": "Cortina Blackout", "quantidade": 130}, {"produto": "Vestido Floral", "quantidade": 125}, {"produto": "Frigideira Antiaderente", "quantidade": 124}, {"produto": "Jogo de Toalhas", "quantidade": 121}, {"produto": "Sabonete Facial", "quantidade": 115}, {"produto": "Tapete Persa", "quantidade": 113}], "receita_por_categoria": [{"categoria": "Moda", "receita": 248124.15}, {"categoria": "Áudio", "receita": 134867.29}, {"categoria": "Acessórios", "receita": 120909.94}, {"categoria": "Casa", "receita": 112704.52}, {"categoria": "Cozinha", "receita": 85059.89}, {"categoria": "Beleza", "receita": 66852.52}, {"categoria": "Eletrônicos", "receita": 62826.28}, {"categoria": "Informática", "receita": 61410.87}, {"categoria": "Games", "receita": 50176.04}, {"categoria": "Esporte", "receita": 24711.59}], "receita_por_marca": [{"marca": "Brastemp", "receita": 161012.51}, {"marca": "Consul", "receita": 128622.39}, {"marca": "Xiaomi", "receita": 100598.85}, {"marca": "Asus", "receita": 94236.36}, {"marca": "Sony", "receita": 60184.38}, {"marca": "Motorola", "receita": 58604.13}, {"marca": "Apple", "receita": 45403.32}, {"marca": "Samsung", "receita": 44897.5}, {"marca": "Electrolux", "receita": 44490.31}, {"marca": "LG", "receita": 33985.33}], "preco_medio_por_categoria": [{"categoria": "Acessórios", "preco_medio": 310.65}, {"categoria": "Beleza", "preco_medio": 304.34}, {"categoria": "Cozinha", "preco_medio": 299.66}, {"categoria": "Informática", "preco_medio": 254.11}, {"categoria": "Áudio", "preco_medio": 214.72}, {"categoria": "Moda", "preco_medio": 197.75}, {"categoria": "Eletrônicos", "preco_medio": 192.65}, {"categoria": "Esporte", "preco_medio": 175.34}, {"categoria": "Casa", "preco_medio": 143.13}, {"categoria": "Games", "preco_medio": 132.16}, {"categoria": "Tênis", "preco_medio": 131.96}]}, "clientes": {"receita_por_estado": [{"estado": "AM", "receita": 78973.69}, {"estado": "TO", "receita": 71055.63}, {"estado": "PA", "receita": 69902.52}, {"estado": "AC", "receita": 69660.88}, {"estado": "SP", "receita": 60695.81}, {"estado": "RS", "receita": 60470.9}, {"estado": "GO", "receita": 57511.71}, {"estado": "MT", "receita": 57207.94}, {"estado": "MG", "receita": 51955.58}, {"estado": "CE", "receita": 49133.23}, {"estado": "AL", "receita": 44313.21}, {"estado": "SE", "receita": 43825.55}, {"estado": "MA", "receita": 38067.2}, {"estado": "MS", "receita": 36207.34}, {"estado": "ES", "receita": 34087.97}, {"estado": "DF", "receita": 26687.99}, {"estado": "RR", "receita": 26091.64}, {"estado": "RJ", "receita": 24350.59}, {"estado": "PB", "receita": 20861.16}, {"estado": "PE", "receita": 18938.34}, {"estado": "AP", "receita": 14327.38}, {"estado": "PR", "receita": 13316.83}], "clientes_por_estado": [{"estado": "PA", "clientes": 4}, {"estado": "TO", "clientes": 4}, {"estado": "AM", "clientes": 4}, {"estado": "SE", "clientes": 3}, {"estado": "SP", "clientes": 3}, {"estado": "RS", "clientes": 3}, {"estado": "GO", "clientes": 3}, {"estado": "MT", "clientes": 3}, {"estado": "CE", "clientes": 3}, {"estado": "AC", "clientes": 3}, {"estado": "ES", "clientes": 2}, {"estado": "AL", "clientes": 2}, {"estado": "MS", "clientes": 2}, {"estado": "MG", "clientes": 2}, {"estado": "MA", "clientes": 2}, {"estado": "DF", "clientes": 1}, {"estado": "PB", "clientes": 1}, {"estado": "PE", "clientes": 1}, {"estado": "AP", "clientes": 1}, {"estado": "RR", "clientes": 1}, {"estado": "PR", "clientes": 1}, {"estado": "RJ", "clientes": 1}], "novos_cadastros_por_mes": [{"mes": "2022-10", "novos_clientes": 1}, {"mes": "2022-12", "novos_clientes": 2}, {"mes": "2023-01", "novos_clientes": 3}, {"mes": "2023-02", "novos_clientes": 3}, {"mes": "2023-03", "novos_clientes": 1}, {"mes": "2023-04", "novos_clientes": 4}, {"mes": "2023-05", "novos_clientes": 1}, {"mes": "2023-06", "novos_clientes": 2}, {"mes": "2023-07", "novos_clientes": 1}, {"mes": "2023-08", "novos_clientes": 1}, {"mes": "2023-10", "novos_clientes": 2}, {"mes": "2023-11", "novos_clientes": 3}, {"mes": "2024-01", "novos_clientes": 1}, {"mes": "2024-02", "novos_clientes": 1}, {"mes": "2024-04", "novos_clientes": 2}, {"mes": "2024-07", "novos_clientes": 1}, {"mes": "2024-08", "novos_clientes": 2}, {"mes": "2024-09", "novos_clientes": 1}, {"mes": "2024-12", "novos_clientes": 3}, {"mes": "2025-01", "novos_clientes": 4}, {"mes": "2025-02", "novos_clientes": 2}, {"mes": "2025-03", "novos_clientes": 2}, {"mes": "2025-05", "novos_clientes": 2}, {"mes": "2025-06", "novos_clientes": 2}, {"mes": "2025-07", "novos_clientes": 2}, {"mes": "2025-10", "novos_clientes": 1}], "ticket_medio_por_cliente": 19352.86, "top_10_clientes": [{"cliente": "Ana Sophia Pereira", "receita": 30716.63}, {"cliente": "Melissa Pastor", "receita": 30039.03}, {"cliente": "Dr, Benício Gomes", "receita": 27397.24}, {"cliente": "Henrique da Conceição", "receita": 26687.99}, {"cliente": "Murilo da Mata", "receita": 26091.64}, {"cliente": "Dra, Mariane Pacheco", "receita": 25454.83}, {"cliente": "Josué Souza", "receita": 24350.59}, {"cliente": "Srta, Yasmin Siqueira", "receita": 23674.1}, {"cliente": "Vitor Gabriel da Luz", "receita": 22656.63}, {"cliente": "Bella Borges", "receita": 22643.99}]}, "competitividade": {"produtos_analisados": 215, "produtos_mais_caros_que_mercado": 127, "produtos_mais_baratos_que_mercado": 82, "produtos_no_preco_de_mercado": 6, "top_10_mais_caros_que_mercado": [{"produto": "Tênis Nike Air Max", "preco_atual": 68.99, "preco_medio_concorrente": 34.49, "diff_pct": 100.03}, {"produto": "Tênis Puma Future", "preco_atual": 123.99, "preco_medio_concorrente": 61.99, "diff_pct": 100.02}, {"produto": "Tênis Puma Speedcat", "preco_atual": 451.9, "preco_medio_concorrente": 225.95, "diff_pct": 100.0}, {"produto": "Tênis Puma Suede", "preco_atual": 404.5, "preco_medio_concorrente": 202.25, "diff_pct": 100.0}, {"produto": "Tênis Adidas Stan Smith", "preco_atual": 197.9, "preco_medio_concorrente": 98.95, "diff_pct": 100.0}, {"produto": "Tênis Nike Revolution", "preco_atual": 174.9, "preco_medio_concorrente": 87.45, "diff_pct": 100.0}, {"produto": "Tênis Nike Revolution", "preco_atual": 105.9, "preco_medio_concorrente": 52.95, "diff_pct": 100.0}, {"produto": "Tênis Nike Dunk", "preco_atual": 95.9, "preco_medio_concorrente": 47.95, "diff_pct": 100.0}, {"produto": "Tênis Nike Revolution", "preco_atual": 69.9, "preco_medio_concorrente": 34.95, "diff_pct": 100.0}, {"produto": "Tênis Puma Future", "preco_atual": 67.9, "preco_medio_concorrente": 33.95, "diff_pct": 100.0}], "top_10_mais_baratos_que_mercado": [{"produto": "Controle Xbox", "preco_atual": 310.9, "preco_medio_concorrente": 333.7, "diff_pct": -6.83}, {"produto": "Soundbar TV", "preco_atual": 88.99, "preco_medio_concorrente": 94.33, "diff_pct": -5.66}, {"produto": "Relógio Analógico", "preco_atual": 105.5, "preco_medio_concorrente": 111.83, "diff_pct": -5.66}, {"produto": "Porta-retrato", "preco_atual": 142.9, "preco_medio_concorrente": 151.47, "diff_pct": -5.66}, {"produto": "Mochila Esportiva", "preco_atual": 44.9, "preco_medio_concorrente": 47.59, "diff_pct": -5.66}, {"produto": "Saia Midi", "preco_atual": 72.9, "preco_medio_concorrente": 77.27, "diff_pct": -5.66}, {"produto": "Mouse Gamer RGB", "preco_atual": 49.99, "preco_medio_concorrente": 52.49, "diff_pct": -4.76}, {"produto": "Conjunto de Malha", "preco_atual": 86.5, "preco_medio_concorrente": 90.82, "diff_pct": -4.76}, {"produto": "Amplificador de Áudio", "preco_atual": 73.9, "preco_medio_concorrente": 77.59, "diff_pct": -4.76}, {"produto": "Halteres Ajustáveis", "preco_atual": 52.99, "preco_medio_concorrente": 55.51, "diff_pct": -4.54}], "breakdown_por_concorrente": [{"concorrente": "Magalu", "diff_pct_medio": 8.71}, {"concorrente": "Shopee", "diff_pct_medio": 8.5}, {"concorrente": "Amazon", "diff_pct_medio": 8.31}, {"concorrente": "Mercado Livre", "diff_pct_medio": 6.68}]}};
+
+Chart.defaults.color = "#94A3B8";
+Chart.defaults.font.family = "'Fira Sans', sans-serif";
+Chart.defaults.borderColor = "rgba(148, 163, 184, 0.12)";
+
+const fmtBRL = (v) => "R$ " + v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+const gridOpt = { color: "rgba(148, 163, 184, 0.10)" };
+const baseTooltip = {
+  backgroundColor: "#1E293B",
+  borderColor: "#334155",
+  borderWidth: 1,
+  titleColor: "#F8FAFC",
+  bodyColor: "#F8FAFC",
+  padding: 10,
+  cornerRadius: 8,
+  displayColors: false,
+};
+
+// Receita por mes (linha)
+new Chart(document.getElementById('chartReceitaMes'), {
+  type: 'line',
+  data: {
+    labels: DATA.vendas.receita_por_mes.map(d => d.mes),
+    datasets: [{
+      label: 'Receita',
+      data: DATA.vendas.receita_por_mes.map(d => d.receita),
+      borderColor: '#22C55E',
+      backgroundColor: 'rgba(34, 197, 94, 0.15)',
+      fill: true,
+      tension: 0.35,
+      pointRadius: 4,
+      pointBackgroundColor: '#22C55E',
+      pointBorderColor: '#020617',
+      pointBorderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { ...baseTooltip, callbacks: { label: (ctx) => fmtBRL(ctx.parsed.y) } } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: gridOpt, ticks: { callback: (v) => fmtBRL(v) } }
+    }
+  }
+});
+
+// Novos clientes por mes (linha)
+new Chart(document.getElementById('chartNovosClientes'), {
+  type: 'line',
+  data: {
+    labels: DATA.clientes.novos_cadastros_por_mes.map(d => d.mes),
+    datasets: [{
+      label: 'Novos clientes',
+      data: DATA.clientes.novos_cadastros_por_mes.map(d => d.novos_clientes),
+      borderColor: '#38BDF8',
+      backgroundColor: 'rgba(56, 189, 248, 0.15)',
+      fill: true, tension: 0.35, pointRadius: 3,
+      pointBackgroundColor: '#38BDF8', pointBorderColor: '#020617', pointBorderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: baseTooltip },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxRotation: 60, minRotation: 60, autoSkip: true, maxTicksLimit: 14 } },
+      y: { grid: gridOpt, ticks: { precision: 0 } }
+    }
+  }
+});
+
+function horizontalBar(canvasId, labels, values, color, currency) {
+  new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: color, borderRadius: 4, maxBarThickness: 22 }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...baseTooltip, callbacks: { label: (ctx) => currency ? fmtBRL(ctx.parsed.x) : ctx.parsed.x.toLocaleString('pt-BR') } } },
+      scales: {
+        x: { grid: gridOpt, ticks: { callback: (v) => currency ? fmtBRL(v) : v } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+horizontalBar('chartCategoria',
+  DATA.produtos.receita_por_categoria.map(d => d.categoria),
+  DATA.produtos.receita_por_categoria.map(d => d.receita),
+  '#22C55E', true);
+
+horizontalBar('chartMarca',
+  DATA.produtos.receita_por_marca.map(d => d.marca),
+  DATA.produtos.receita_por_marca.map(d => d.receita),
+  '#A78BFA', true);
+
+horizontalBar('chartEstado',
+  DATA.clientes.receita_por_estado.map(d => d.estado),
+  DATA.clientes.receita_por_estado.map(d => d.receita),
+  '#FBBF24', true);
+
+// Diferenca por concorrente: cor condicional (vermelho = mais caro, verde = mais barato)
+const concorrentes = DATA.competitividade.breakdown_por_concorrente;
+new Chart(document.getElementById('chartConcorrente'), {
+  type: 'bar',
+  data: {
+    labels: concorrentes.map(d => d.concorrente),
+    datasets: [{
+      data: concorrentes.map(d => d.diff_pct_medio),
+      backgroundColor: concorrentes.map(d => d.diff_pct_medio >= 0 ? '#EF4444' : '#22C55E'),
+      borderRadius: 4, maxBarThickness: 26,
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { ...baseTooltip, callbacks: { label: (ctx) => (ctx.parsed.x >= 0 ? '+' : '') + ctx.parsed.x.toFixed(1) + '%' } } },
+    scales: {
+      x: { grid: gridOpt, ticks: { callback: (v) => v + '%' } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// Realca a aba visivel na navegacao conforme o scroll
+const sections = document.querySelectorAll('main section[id]');
+const tabs = document.querySelectorAll('nav.tabs a');
+const setActive = (id) => tabs.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+if ('IntersectionObserver' in window) {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if (entry.isIntersecting) setActive(entry.target.id); });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  sections.forEach(s => obs.observe(s));
+}
+</script>
+</body>
+</html>
